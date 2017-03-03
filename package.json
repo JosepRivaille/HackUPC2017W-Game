@@ -1,0 +1,22 @@
+{
+  "name": "game-leap-motion",
+  "version": "1.0.0",
+  "description": "WebGL game with LeapMotion",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://JosepRivaille@github.com/JosepRivaille/HackUPC2017W-Game.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JosepRivaille/HackUPC2017W-Game/issues"
+  },
+  "homepage": "https://github.com/JosepRivaille/HackUPC2017W-Game#readme",
+  "dependencies": {
+    "express": "^4.15.0"
+  }
+}
