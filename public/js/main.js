@@ -2,6 +2,8 @@
     var scene, camera, renderer;
     var geometry, material, mesh;
 
+    var handPosition = {};
+
     init();
     animate();
 
@@ -27,12 +29,25 @@
 
     function animate() {
 
-        requestAnimationFrame(animate);
-
-        mesh.rotation.x += 0.01;
-        mesh.rotation.y += 0.02;
+        camera.fov += zoomOut() ? 1 : -1;
+        camera.updateProjectionMatrix();
 
         renderer.render(scene, camera);
-
     }
+
+    function zoomOut() {
+        return handPosition.z > 0;
+    }
+
+    Leap.loop({
+        hand: function (hand) {
+            handPosition = {
+                x: hand._translation[0],
+                y: hand._translation[1],
+                z: hand._translation[2]
+            }
+            requestAnimationFrame(animate);
+        }
+    });
+
 })();
