@@ -1,12 +1,5 @@
 (function () {
 
-    const Const = {
-        MAX_ZOOM: 150,
-        MIN_ZOOM: 50,
-        DETECTION: 50,
-        JUMP_HEIGHT: 600
-    };
-
     const Sounds = {
         MAIN_THEME: document.getElementById('main-sound'),
         COLLISION: document.getElementById('collision-sound'),
@@ -24,7 +17,7 @@
     var playerMesh;
     var enemyGeometry, enemyMaterial, enemyMesh;
 
-    var speed = 50;
+    var speed = 60;
     var score = 0;
 
     var handModel = {};
@@ -57,6 +50,7 @@
                     arwing.scale.y = 100;
                     arwing.scale.z = 100;
                     arwing.rotation.y = Math.PI;
+                    arwing.position.y = 50;
                     playerMesh = arwing;
 
                     init();
@@ -74,9 +68,9 @@
         scene = new THREE.Scene();
 
         // Camera
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+        camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 10000);
         camera.position.z = 1000;
-        camera.position.y = 700;
+        camera.position.y = 300;
 
         // Plane
         planeGeometry = new THREE.PlaneBufferGeometry(4000, 10000);
@@ -106,18 +100,18 @@
 
         camera.updateProjectionMatrix();
 
-        playerMesh.position.x = slideLateral();
-        playerMesh.position.y = jumpVertical();
+        controlMovement();
+
         if (handModel.extended) {
-            shootBullet();
+            shootBlaster();
         }
 
-        enemyMesh.position.z += speed * 2;
-        Textures.ROAD.offset.y += speed / 3500;
+        enemyMesh.position.z += speed;
+        Textures.ROAD.offset.y += speed / 4000;
         Textures.ROAD.needsUpdate = true;
 
         if (enemyMesh.position.z > 1000) {
-            speed += 2;
+            ++speed;
             updateScore();
             scene.remove(enemyMesh);
             generateEnemy();
@@ -125,20 +119,19 @@
 
         if (!!BARRELLING) {
             playerMesh.rotation.z += (0.15 * BARRELLING);
-            console.log(playerMesh.rotation.z);
-            if ((BARRELLING === 1 && playerMesh.rotation.z > 2 * Math.PI) || (BARRELLING === -1 && playerMesh.rotation.z < -(2 * Math.PI))) {
+            if ((BARRELLING === 1 && playerMesh.rotation.z > 2 * Math.PI)
+                || (BARRELLING === -1 && playerMesh.rotation.z < -2 * Math.PI)) {
                 BARRELLING = false;
-                setTimeout(function(){ BARRELLING = undefined }, 2000);
+                setTimeout(function () {
+                    BARRELLING = undefined
+                }, 1000);
                 playerMesh.rotation.z = 0;
             }
         }
 
-
         checkCollision();
 
         renderer.render(scene, camera);
-
-        resetHandModel();
     }
 
     function updateScore() {
@@ -164,28 +157,20 @@
         }
     }
 
-    // X-axis movement (Positive -> Right, Negative -> Left)
-    function slideLateral() {
-        const width = window.innerWidth / 2;
-        if (handModel.x > Const.DETECTION)
-            return width;
-        else if (handModel.x < -Const.DETECTION)
-            return -width;
-        return 0;
-    }
-
-    // Y-axis movement (Positive -> Up, Negative -> Down)
-    function jumpVertical() {
-        if (handModel.y > Const.DETECTION && playerMesh.position.y === 100) {
-            return Const.JUMP_HEIGHT;
-        } else if (handModel.y < Const.DETECTION) {
-            return 100;
-        } else {
-            return playerMesh.position.y;
+    // Movement controller
+    function controlMovement() {
+        if (handModel.x > -300 && handModel.x < 300) {
+            playerMesh.position.x = handModel.x * 6;
+            if (!BARRELLING) {
+                playerMesh.rotation.z = -handModel.x * 0.0025;
+            }
+        }
+        if (handModel.y > 50 && handModel.y < 250) {
+            playerMesh.position.y = handModel.y * 3 - 25;
         }
     }
 
-    function shootBullet() {
+    function shootBlaster() {
         Sounds.BLASTER.play();
     }
 
@@ -198,15 +183,6 @@
         enemyMesh.position.y = 200;
         enemyMesh.position.z = -5000;
         scene.add(enemyMesh);
-    }
-
-    function resetHandModel() {
-        handModel = {
-            x: 0,
-            y: 0,
-            z: 0,
-            extended: false
-        }
     }
 
     function getCookie(cookieName) {
@@ -241,10 +217,9 @@
     Leap.loop({
         hand: function (hand) {
             handModel = {
-                x: hand._translation[0],
-                y: hand._translation[1],
-                z: hand._translation[2],
-                extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.7
+                x: hand.palmPosition[0],
+                y: hand.palmPosition[1],
+                extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.8
             };
         },
         enableGestures: true
@@ -255,11 +230,10 @@
                     case "circle":
                         if (BARRELLING === undefined) {
                             Sounds.BARREL_ROLL.volume = 0.5;
-                            var pointableID = gesture.pointableIds[0];
-                            var direction = frame.pointable(pointableID).direction;
-                            var dotProduct = Leap.vec3.dot(direction, gesture.normal);
-                            BARRELLING = dotProduct > 0 ? 1 : -1;
                             Sounds.BARREL_ROLL.play();
+                            setTimeout(function () {
+                                BARRELLING = Leap.vec3.dot(frame.pointable(gesture.pointableIds[0]).direction, gesture.normal) > 0 ? 1 : -1;
+                            }, 250);
                         }
                 }
             });
