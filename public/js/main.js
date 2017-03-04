@@ -89,10 +89,10 @@
         scene.add(light);
 
         // Plane
-        var geometry = new THREE.CubeGeometry( window.innerWidth*2, window.innerHeight, 10000 );
+        var geometry = new THREE.CubeGeometry( window.innerWidth*3, window.innerHeight*2, 10000 );
         var material = new THREE.MeshPhongMaterial( { map: Textures.ROAD, side: THREE.BackSide } )
         var cube = new THREE.Mesh( geometry, material );
-        cube.position.y = 500;
+        cube.position.y = window.innerHeight/2;
 
         scene.add( cube );
 
@@ -186,8 +186,8 @@
                 playerMesh.rotation.z = -handModel.x * 0.0025;
             }
         }
-        if (handModel.y > 50 && handModel.y < 250) {
-            playerMesh.position.y = handModel.y * 3 - 25;
+        if (handModel.y > 0 && handModel.y < 250) {
+            playerMesh.position.y = handModel.y * 5 - 400;
         }
     }
 
