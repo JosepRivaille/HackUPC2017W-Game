@@ -42,7 +42,21 @@
             roadTexture.wrapS = THREE.RepeatWrapping;
             roadTexture.wrapT = THREE.RepeatWrapping;
             roadTexture.repeat.set(1, 1);
-            Textures.ROAD = roadTexture;
+            Textures.ROAD = {
+                bottom: roadTexture.clone(),
+                right: roadTexture.clone(),
+                top: roadTexture.clone(),
+                left: roadTexture.clone()
+            };
+            materials = [
+                new THREE.MeshPhongMaterial({map: Textures.ROAD.right, side: THREE.BackSide}),
+                new THREE.MeshPhongMaterial({map: Textures.ROAD.left, side: THREE.BackSide}),
+                new THREE.MeshPhongMaterial({map: Textures.ROAD.top, side: THREE.BackSide}),
+                new THREE.MeshPhongMaterial({map: Textures.ROAD.bottom, side: THREE.BackSide}),
+                new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide}), // Back
+                new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide}) // Front
+            ];
+
         });
 
         loader.load('img/sky.jpg', function (skyTexture) {
@@ -92,12 +106,12 @@
         scene.add(light);
 
         // Plane
-        var geometry = new THREE.CubeGeometry( window.innerWidth*3, window.innerHeight*2, 10000 );
-        var material = new THREE.MeshPhongMaterial( { map: Textures.ROAD, side: THREE.BackSide } )
-        var cube = new THREE.Mesh( geometry, material );
-        cube.position.y = window.innerHeight/2;
+        var geometry = new THREE.CubeGeometry(window.innerWidth * 3, window.innerHeight * 2, 10000);
+        var material = new THREE.MultiMaterial(materials);
+        var cube = new THREE.Mesh(geometry, material);
+        cube.position.y = window.innerHeight / 2;
 
-        scene.add( cube );
+        scene.add(cube);
 
 
         // Player
@@ -139,8 +153,15 @@
             }
             checkCollision(enemyMesh);
         });
-        Textures.ROAD.offset.y -= speed / 4000;
-        Textures.ROAD.needsUpdate = true;
+        Textures.ROAD.left.offset.x -= speed / 4000;
+        Textures.ROAD.left.needsUpdate = true;
+        Textures.ROAD.right.offset.x += speed / 4000;
+        Textures.ROAD.right.needsUpdate = true;
+        Textures.ROAD.bottom.offset.y -= speed / 4000;
+        Textures.ROAD.bottom.needsUpdate = true;
+        Textures.ROAD.top.offset.y += speed / 4000;
+        Textures.ROAD.top.needsUpdate = true;
+
 
         if (!!BARRELLING) {
             playerMesh.rotation.z += (0.15 * BARRELLING);
