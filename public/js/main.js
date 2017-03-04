@@ -49,7 +49,7 @@
             arwingObj.traverse(function (child) {
                 if (child instanceof THREE.Mesh) {
                     loader.load('models/arwing.png', function (texture) {
-                        child.material = new THREE.MeshBasicMaterial({map: texture});
+                        child.material = new THREE.MeshLambertMaterial({map: texture});
                     });
                 }
             });
@@ -64,7 +64,7 @@
             meteorObj.traverse(function (child) {
                 if (child instanceof THREE.Mesh) {
                     loader.load('models/meteor.png', function (texture) {
-                        child.material = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide});
+                        child.material = new THREE.MeshLambertMaterial({map: texture, side: THREE.DoubleSide});
                     });
                 }
             });
@@ -80,13 +80,17 @@
         scene = new THREE.Scene();
 
         // Camera
-        camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 10000);
+        camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.01, 10000);
         camera.position.z = 1000;
         camera.position.y = 300;
 
+        // Light
+        var light = new THREE.AmbientLight(0XFFFFFF);
+        scene.add(light);
+
         // Plane
         planeGeometry = new THREE.PlaneBufferGeometry(4000, 10000);
-        planeMaterial = new THREE.MeshBasicMaterial({map: Textures.ROAD});
+        planeMaterial = new THREE.MeshLambertMaterial({map: Textures.ROAD});
         planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
         planeMesh.rotation.x = -Math.PI / 2;
         scene.add(planeMesh);
@@ -94,9 +98,7 @@
         // Player
         scene.add(playerMesh);
 
-        generateEnemy();
-        generateEnemy();
-        generateEnemy();
+        updateScore();
         generateEnemy();
 
         // Render
@@ -153,6 +155,7 @@
     function updateScore() {
         ++score;
         document.getElementById("score").innerHTML = String(score);
+        document.getElementById("speed").innerHTML = String(speed);
     }
 
     function checkCollision(enemyMesh) {
@@ -162,9 +165,9 @@
             PLAY = false;
             Sounds.MAIN_THEME.volume = 0.2;
             Sounds.COLLISION.play();
-            var menu = document.getElementById("menu");
+            var menu = document.getElementById("hud-menu");
             menu.style.display = 'block';
-            document.getElementById("menuHighScore").innerHTML = treatHighScore();
+            document.getElementById("high-score").innerHTML = treatHighScore();
             document.getElementById("reset-button").addEventListener("click", function () {
                 Sounds.MAIN_THEME.pause();
                 menu.style.display = 'none';
@@ -240,7 +243,7 @@
             handModel = {
                 x: hand.palmPosition[0],
                 y: hand.palmPosition[1],
-                extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.9
+                extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.7
             };
         },
         enableGestures: true

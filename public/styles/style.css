@@ -3,7 +3,7 @@
     src: url('../fonts/custom.ttf'); /*URL to font*/
 }
 
-body{
+body {
     font-family: "custom-font", serif;
 }
 
@@ -11,7 +11,8 @@ canvas {
     background-image: url('../img/sky.jpg') !important;
     background-size: cover;
 }
-#layer{
+
+#layer {
     position: absolute;
     width: 100vw;
     height: 100vh;
@@ -23,34 +24,64 @@ canvas {
     opacity: 0.2;
 }
 
-#hud{
+#hud {
     position: absolute;
     bottom: -25px;
-    width:80%;
-    margin:auto;
+    width: 80%;
+    margin: auto;
     left: 0;
-    right:0;
+    right: 0;
     perspective: 500px;
 
 }
-#hud .hud-part{
-    height: 20vh;
-    background-color: rgba(167,216,222, 0.8);
+#hud .hud-part {
+    height: 10vh;
+    background-color: rgba(167, 216, 222, 0.8);
     border-radius: 10px;
-    font-size: 3.5em;
-    padding:20px;
-    border: 3px solid rgba(167,216,222, 1);
-
+    font-size: 2.5em;
+    padding: 20px;
+    border: 3px solid rgba(167, 216, 222, 1);
 }
-#hud-left{
-    width:30%;
-    float:left;
+
+#hud-menu {
+    width: 40%;
+    display: none;
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    top: 10vh;
+    bottom: 20vh;
+    background-color: rgba(167, 216, 222, 0.8);
+    border-radius: 10px;
+    font-size: 2.5em;
+    padding: 20px;
+    border: 3px solid rgba(167, 216, 222, 1);
+    text-align: center;
+}
+
+#reset-button {
+    font-family: "custom-font", serif;
+    background: transparent;
+    text-align: center;
+    border: 5px solid black;
+    padding: 5px 15px;
+    margin: 5px 0;
+    font-size: 1em;
+    width: 60%;
+}
+
+#hud-left {
+    width: 30%;
+    float: left;
     transform: rotateY(36deg);
     text-align: left;
 
 }
-#hud-right{
-    width:30%;
+
+#hud-right {
+    width: 30%;
     float: right;
     transform: rotateY(-36deg);
     text-align: right;
