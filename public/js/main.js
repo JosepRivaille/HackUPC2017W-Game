@@ -17,6 +17,7 @@
     var Textures = {};
 
     var PLAY = true;
+    var BARRELLING = undefined;
 
     var scene, camera, renderer;
     var planeGeometry, planeMaterial, planeMesh;
@@ -29,10 +30,8 @@
     var handModel = {};
 
     var manager = new THREE.LoadingManager();
-    manager.onProgress = function ( item, loaded, total ) {
-
-        console.log( item, loaded, total );
-
+    manager.onProgress = function (item, loaded, total) {
+        console.log(item, loaded, total);
     };
 
     var objectLoader = new THREE.OBJLoader(manager);
@@ -54,9 +53,9 @@
                             });
                         }
                     });
-                    arwing.scale.x = 150;
-                    arwing.scale.y = 150;
-                    arwing.scale.z = 150;
+                    arwing.scale.x = 100;
+                    arwing.scale.y = 100;
+                    arwing.scale.z = 100;
                     arwing.rotation.y = Math.PI;
                     playerMesh = arwing;
 
@@ -123,6 +122,17 @@
             scene.remove(enemyMesh);
             generateEnemy();
         }
+
+        if (!!BARRELLING) {
+            playerMesh.rotation.z += (0.15 * BARRELLING);
+            console.log(playerMesh.rotation.z);
+            if ((BARRELLING === 1 && playerMesh.rotation.z > 2 * Math.PI) || (BARRELLING === -1 && playerMesh.rotation.z < -(2 * Math.PI))) {
+                BARRELLING = false;
+                setTimeout(function(){ BARRELLING = undefined }, 2000);
+                playerMesh.rotation.z = 0;
+            }
+        }
+
 
         checkCollision();
 
@@ -236,6 +246,23 @@
                 z: hand._translation[2],
                 extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.7
             };
+        },
+        enableGestures: true
+    }, function (frame) {
+        if (frame.valid && frame.gestures.length > 0) {
+            frame.gestures.forEach(function (gesture) {
+                switch (gesture.type) {
+                    case "circle":
+                        if (BARRELLING === undefined) {
+                            Sounds.BARREL_ROLL.volume = 0.5;
+                            var pointableID = gesture.pointableIds[0];
+                            var direction = frame.pointable(pointableID).direction;
+                            var dotProduct = Leap.vec3.dot(direction, gesture.normal);
+                            BARRELLING = dotProduct > 0 ? 1 : -1;
+                            Sounds.BARREL_ROLL.play();
+                        }
+                }
+            });
         }
     });
 
