@@ -14,51 +14,63 @@
 
     var scene, camera, renderer;
     var planeGeometry, planeMaterial, planeMesh;
-    var playerMesh;
-    var enemyGeometry, enemyMaterial, enemyMesh;
+    var playerMesh, enemyMesh;
+    var enemies = [];
 
-    var speed = 60;
+    var speed = 30;
     var score = 0;
 
     var handModel = {};
 
-    var manager = new THREE.LoadingManager();
-    manager.onProgress = function (item, loaded, total) {
-        console.log(item, loaded, total);
-    };
+    imports();
+    setTimeout(function () {
+        init();
+        animate();
+    }, 1000);
 
-    var objectLoader = new THREE.OBJLoader(manager);
-    var loader = new THREE.TextureLoader(manager);
-    loader.load('img/road.jpg', function (roadTexture) {
-        roadTexture.wrapS = THREE.RepeatWrapping;
-        roadTexture.wrapT = THREE.RepeatWrapping;
-        roadTexture.repeat.set(10, 10);
-        Textures.ROAD = roadTexture;
-        loader.load('img/box.png', function (boxTexture) {
-            Textures.BOX = boxTexture;
-            loader.load('img/sky.jpg', function (skyTexture) {
-                Textures.SKY = skyTexture;
-                objectLoader.load('models/arwing.obj', function (arwing) {
-                    arwing.traverse(function (child) {
-                        if (child instanceof THREE.Mesh) {
-                            loader.load('models/arwing.png', function (texture) {
-                                child.material = new THREE.MeshBasicMaterial({map: texture});
-                            });
-                        }
+    function imports() {
+        var manager = new THREE.LoadingManager();
+        manager.onProgress = function (item, loaded, total) {
+            console.log(loaded + ' - ' + total);
+        };
+        var objectLoader = new THREE.OBJLoader(manager);
+        var loader = new THREE.TextureLoader(manager);
+
+        loader.load('img/road.jpg', function (roadTexture) {
+            roadTexture.wrapS = THREE.RepeatWrapping;
+            roadTexture.wrapT = THREE.RepeatWrapping;
+            roadTexture.repeat.set(10, 10);
+            Textures.ROAD = roadTexture;
+        });
+        loader.load('img/sky.jpg', function (skyTexture) {
+            Textures.SKY = skyTexture;
+        });
+        objectLoader.load('models/arwing.obj', function (arwingObj) {
+            arwingObj.traverse(function (child) {
+                if (child instanceof THREE.Mesh) {
+                    loader.load('models/arwing.png', function (texture) {
+                        child.material = new THREE.MeshBasicMaterial({map: texture});
                     });
-                    arwing.scale.x = 100;
-                    arwing.scale.y = 100;
-                    arwing.scale.z = 100;
-                    arwing.rotation.y = Math.PI;
-                    arwing.position.y = 50;
-                    playerMesh = arwing;
-
-                    init();
-                    animate();
-                });
+                }
             });
-        })
-    });
+            arwingObj.scale.x = 100;
+            arwingObj.scale.y = 100;
+            arwingObj.scale.z = 100;
+            arwingObj.rotation.y = Math.PI;
+            arwingObj.position.y = 50;
+            playerMesh = arwingObj;
+        });
+        objectLoader.load('models/meteor.obj', function (meteorObj) {
+            meteorObj.traverse(function (child) {
+                if (child instanceof THREE.Mesh) {
+                    loader.load('models/meteor.png', function (texture) {
+                        child.material = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide});
+                    });
+                }
+            });
+            enemyMesh = meteorObj;
+        });
+    }
 
     function init() {
 
@@ -68,7 +80,7 @@
         scene = new THREE.Scene();
 
         // Camera
-        camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 10000);
+        camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 10000);
         camera.position.z = 1000;
         camera.position.y = 300;
 
@@ -82,6 +94,9 @@
         // Player
         scene.add(playerMesh);
 
+        generateEnemy();
+        generateEnemy();
+        generateEnemy();
         generateEnemy();
 
         // Render
@@ -106,16 +121,19 @@
             shootBlaster();
         }
 
-        enemyMesh.position.z += speed;
+        enemies.forEach(function (enemyMesh, index) {
+            enemyMesh.position.z += speed;
+            if (enemyMesh.position.z > 1000) {
+                ++speed;
+                updateScore();
+                scene.remove(enemyMesh);
+                delete enemies[index];
+                generateEnemy();
+            }
+            checkCollision(enemyMesh);
+        });
         Textures.ROAD.offset.y += speed / 4000;
         Textures.ROAD.needsUpdate = true;
-
-        if (enemyMesh.position.z > 1000) {
-            ++speed;
-            updateScore();
-            scene.remove(enemyMesh);
-            generateEnemy();
-        }
 
         if (!!BARRELLING) {
             playerMesh.rotation.z += (0.15 * BARRELLING);
@@ -129,8 +147,6 @@
             }
         }
 
-        checkCollision();
-
         renderer.render(scene, camera);
     }
 
@@ -139,7 +155,7 @@
         document.getElementById("score").innerHTML = String(score);
     }
 
-    function checkCollision() {
+    function checkCollision(enemyMesh) {
         var firstBB = new THREE.Box3().setFromObject(playerMesh);
         var secondBB = new THREE.Box3().setFromObject(enemyMesh);
         if (firstBB.intersectsBox(secondBB)) {
@@ -176,13 +192,18 @@
 
     // Enemy
     function generateEnemy() {
-        enemyGeometry = new THREE.BoxGeometry(400, 400, 400);
-        enemyMaterial = new THREE.MeshBasicMaterial({map: Textures.BOX});
-        enemyMesh = new THREE.Mesh(enemyGeometry, enemyMaterial);
+        var randSize = (Math.random() * 3 + 1) * (!!Math.floor(Math.random()) ? -1 : 1);
+        enemyMesh.scale.x = randSize;
+        enemyMesh.scale.y = randSize;
+        enemyMesh.scale.z = randSize;
+        enemyMesh.rotation.x += randSize * randSize;
+        enemyMesh.rotation.y -= randSize + randSize;
+        enemyMesh.rotation.z += randSize;
         enemyMesh.position.x = Math.floor(((Math.random() - 0.5) * window.innerWidth * 2));
-        enemyMesh.position.y = 200;
-        enemyMesh.position.z = -5000;
+        enemyMesh.position.y = Math.floor(((Math.random() - 0.5) * window.innerHeight)) + window.innerHeight / 2;
+        enemyMesh.position.z = -10000;
         scene.add(enemyMesh);
+        enemies.push(enemyMesh);
     }
 
     function getCookie(cookieName) {
@@ -219,7 +240,7 @@
             handModel = {
                 x: hand.palmPosition[0],
                 y: hand.palmPosition[1],
-                extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.8
+                extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.9
             };
         },
         enableGestures: true
