@@ -6,14 +6,17 @@
     <link rel="stylesheet" type="text/css" href="styles/style.css">
 </head>
 <body style="margin: 0; padding: 0; overflow: hidden;">
+<div id="layer"></div>
+<div id="display-speed">
+    Speed <span id="speed"></span>
+</div>
+
 <div id="hud">
-    <div id="topbar">
-        <div>score: <span id="score">0</span></div>
+    <div id="hud-left" class="hud-part">
+        Speed <span id="speed">10</span>
     </div>
-    <div id="menu">
-        <h1>Game Over</h1>
-        <h2>HighScore: <span id="menuHighScore">0</span></h2>
-        <button id="reset-button">reset</button>
+    <div id="hud-right" class="hud-part">
+        Score <span id="score">0</span>
     </div>
 </div>
 

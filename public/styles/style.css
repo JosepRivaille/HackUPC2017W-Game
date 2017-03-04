@@ -11,41 +11,47 @@ canvas {
     background-image: url('../img/sky.jpg') !important;
     background-size: cover;
 }
-#hud{
+#layer{
     position: absolute;
     width: 100vw;
     height: 100vh;
-    z-index: 100;
-    display:block;
+    background-size: 20%;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url("../img/hud_bg.png");
+    opacity: 0.2;
 }
-#topbar{
-    margin:10px;
-    padding: 10px;
-    width: auto;
-    font-size:3em;
-}
-#menu{
-    width: 40%;
-    display: none;
-    border-radius: 10px;
-    background-color: rgba(255, 240,119, 0.85);
-    border: 5px solid black;
-    position: relative;
+
+#hud{
+    position: absolute;
+    bottom: -25px;
+    width:80%;
     margin:auto;
-    padding: 100px;
-    text-align: center;
+    left: 0;
+    right:0;
+    perspective: 500px;
+
 }
-#menu h1{
-    font-size: 4em;
+#hud .hud-part{
+    height: 20vh;
+    background-color: rgba(167,216,222, 0.8);
+    border-radius: 10px;
+    font-size: 3.5em;
+    padding:20px;
+    border: 3px solid rgba(167,216,222, 1);
+
 }
-button{
-    font-family: "custom-font", serif;
-    text-align: center;
-    background-color: white;
-    border: 1px solid black;
-    padding: 10px 30px;
-    font-size: 2.5em;
+#hud-left{
+    width:30%;
+    float:left;
+    transform: rotateY(36deg);
+    text-align: left;
+
 }
-button:hover{
-    background-color: #ddd;
+#hud-right{
+    width:30%;
+    float: right;
+    transform: rotateY(-36deg);
+    text-align: right;
 }
