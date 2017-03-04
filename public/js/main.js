@@ -6,16 +6,33 @@
         DETECTION: 50
     };
 
+    var Textures = {
+        ROAD: undefined,
+        BOX: undefined
+    };
+
     var scene, camera, renderer;
     var planeGeometry, planeMaterial, planeMesh;
     var playerGeometry, playerMaterial, playerMesh;
     var enemyGeometry, enemyMaterial, enemyMesh;
 
     var speed = 50;
+    var score = 0;
+
     var handModel = {};
 
-    init();
-    animate();
+    var loader = new THREE.TextureLoader();
+    loader.load('img/road.jpg', function (roadTexture) {
+        roadTexture.wrapS = THREE.RepeatWrapping;
+        roadTexture.wrapT = THREE.RepeatWrapping;
+        roadTexture.repeat.set(10, 10);
+        Textures.ROAD = roadTexture;
+        loader.load('img/box.png', function (boxTexture) {
+            Textures.BOX = boxTexture;
+            init();
+            animate();
+        })
+    });
 
     function init() {
         scene = new THREE.Scene();
@@ -27,9 +44,9 @@
 
         // Plane
         planeGeometry = new THREE.PlaneBufferGeometry(4000, 10000);
-        planeMaterial = new THREE.MeshPhongMaterial({color: 0x20272F, side: THREE.DoubleSide});
+        planeMaterial = new THREE.MeshBasicMaterial({map: Textures.ROAD});
         planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-        planeMesh.rotation.x = Math.PI / 2;
+        planeMesh.rotation.x = -Math.PI / 2;
         scene.add(planeMesh);
 
         // Player (Currently a cube)
@@ -53,21 +70,37 @@
 
         requestAnimationFrame(animate);
 
-        //if (handModel.extended) {
-            camera.updateProjectionMatrix();
+        camera.updateProjectionMatrix();
 
+        if (handModel.extended) {
             playerMesh.position.x = slideLateral();
+        }
+
+        if (enemyMesh !== undefined) {
             enemyMesh.position.z += speed;
+            Textures.ROAD.offset.y += speed / 3000;
+            Textures.ROAD.needsUpdate = true;
             if (enemyMesh.position.z > 1000) {
                 ++speed;
+                ++score;
                 scene.remove(enemyMesh);
                 generateEnemy();
             }
 
-            renderer.render(scene, camera);
-        //}
+            if (checkCollision()) {
+                //alert(score);
+            }
+        }
+
+        renderer.render(scene, camera);
 
         resetHandModel();
+    }
+
+    function checkCollision() {
+        var firstBB = new THREE.Box3().setFromObject(playerMesh);
+        var secondBB = new THREE.Box3().setFromObject(enemyMesh);
+        return firstBB.intersectsBox(secondBB);
     }
 
     // X-axis movement (Positive -> Right, Negative -> Left)
@@ -83,7 +116,7 @@
     // Enemy
     function generateEnemy() {
         enemyGeometry = new THREE.BoxGeometry(400, 400, 400);
-        enemyMaterial = new THREE.MeshBasicMaterial({color: 0x00FF00});
+        enemyMaterial = new THREE.MeshBasicMaterial({map: Textures.BOX});
         enemyMesh = new THREE.Mesh(enemyGeometry, enemyMaterial);
         enemyMesh.position.x = Math.floor(((Math.random() - 0.5) * window.innerWidth * 2));
         enemyMesh.position.y = 200;
