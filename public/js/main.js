@@ -7,8 +7,11 @@
     };
 
     var scene, camera, renderer;
-    var geometry, material, mesh;
+    var planeGeometry, planeMaterial, planeMesh;
+    var playerGeometry, playerMaterial, playerMesh;
+    var enemyGeometry, enemyMaterial, enemyMesh;
 
+    var speed = 50;
     var handModel = {};
 
     init();
@@ -17,25 +20,31 @@
     function init() {
         scene = new THREE.Scene();
 
-        geometry = new THREE.PlaneBufferGeometry(4000, 10000);
-        material = new THREE.MeshPhongMaterial({color: 0x00FF00, side: THREE.DoubleSide});
-        mesh = new THREE.Mesh(geometry, material);
-        mesh.rotation.x = Math.PI / 2;
-        scene.add(mesh);
-
+        // Camera
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
         camera.position.z = 1000;
         camera.position.y = 500;
 
-        geometry = new THREE.BoxGeometry(200, 200, 200);
-        material = new THREE.MeshBasicMaterial({color: 0x910D1A});
-        mesh = new THREE.Mesh(geometry, material);
-        mesh.position.y = 100;
-        scene.add(mesh);
+        // Plane
+        planeGeometry = new THREE.PlaneBufferGeometry(4000, 10000);
+        planeMaterial = new THREE.MeshPhongMaterial({color: 0x20272F, side: THREE.DoubleSide});
+        planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+        planeMesh.rotation.x = Math.PI / 2;
+        scene.add(planeMesh);
 
+        // Player (Currently a cube)
+        playerGeometry = new THREE.BoxGeometry(200, 200, 200);
+        playerMaterial = new THREE.MeshBasicMaterial({color: 0x910D1A});
+        playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
+        playerMesh.position.y = 100;
+        scene.add(playerMesh);
+
+        generateEnemy();
+
+        // Render
         renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x0000FF, 0.5);
+        renderer.setClearColor(0x99CCFF, 1);
 
         document.body.appendChild(renderer.domElement);
     }
@@ -44,13 +53,19 @@
 
         requestAnimationFrame(animate);
 
-        if (handModel.extended) {
+        //if (handModel.extended) {
             camera.updateProjectionMatrix();
 
-            mesh.position.x = slideLateral();
+            playerMesh.position.x = slideLateral();
+            enemyMesh.position.z += speed;
+            if (enemyMesh.position.z > 1000) {
+                ++speed;
+                scene.remove(enemyMesh);
+                generateEnemy();
+            }
 
             renderer.render(scene, camera);
-        }
+        //}
 
         resetHandModel();
     }
@@ -65,25 +80,16 @@
         return 0;
     }
 
-    /*
-    // Y-axis height (Positive -> Up, Negative -> Down)
-    function getHeight() {
-        if (handModel.y > 0)
-            return mesh.position.y > window.innerHeight / 2 ? 0 : 10;
-        else if (handModel.y < 0)
-            return mesh.position.y < -window.innerHeight / 2 ? 0 : -10;
-        return 0;
+    // Enemy
+    function generateEnemy() {
+        enemyGeometry = new THREE.BoxGeometry(400, 400, 400);
+        enemyMaterial = new THREE.MeshBasicMaterial({color: 0x00FF00});
+        enemyMesh = new THREE.Mesh(enemyGeometry, enemyMaterial);
+        enemyMesh.position.x = Math.floor(((Math.random() - 0.5) * window.innerWidth * 2));
+        enemyMesh.position.y = 200;
+        enemyMesh.position.z = -5000;
+        scene.add(enemyMesh);
     }
-
-    // Z-axis zoom (Positive -> Out, Negative -> In)
-    function getZoom() {
-        if (handModel.z > Const.DETECTION)
-            return camera.fov < Const.MAX_ZOOM ? 1 : 0;
-        else if (handModel.z < -Const.DETECTION)
-            return camera.fov > Const.MIN_ZOOM ? -1 : 0;
-        return 0;
-    }*/
-
 
     function resetHandModel() {
         handModel = {
