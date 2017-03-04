@@ -13,7 +13,6 @@
     var BARRELLING = undefined;
 
     var scene, camera, renderer;
-    var planeGeometry, planeMaterial, planeMesh;
     var playerMesh, enemyMesh;
     var enemies = [];
 
@@ -36,12 +35,13 @@
         var objectLoader = new THREE.OBJLoader(manager);
         var loader = new THREE.TextureLoader(manager);
 
-        loader.load('img/road.jpg', function (roadTexture) {
+        loader.load('img/road.png', function (roadTexture) {
             roadTexture.wrapS = THREE.RepeatWrapping;
             roadTexture.wrapT = THREE.RepeatWrapping;
-            roadTexture.repeat.set(10, 10);
+            roadTexture.repeat.set(1, 1);
             Textures.ROAD = roadTexture;
         });
+
         loader.load('img/sky.jpg', function (skyTexture) {
             Textures.SKY = skyTexture;
         });
@@ -89,11 +89,13 @@
         scene.add(light);
 
         // Plane
-        planeGeometry = new THREE.PlaneBufferGeometry(4000, 10000);
-        planeMaterial = new THREE.MeshLambertMaterial({map: Textures.ROAD});
-        planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-        planeMesh.rotation.x = -Math.PI / 2;
-        scene.add(planeMesh);
+        var geometry = new THREE.CubeGeometry( window.innerWidth*2, window.innerHeight, 10000 );
+        var material = new THREE.MeshPhongMaterial( { map: Textures.ROAD, side: THREE.BackSide } )
+        var cube = new THREE.Mesh( geometry, material );
+        cube.position.y = 500;
+
+        scene.add( cube );
+
 
         // Player
         scene.add(playerMesh);
@@ -134,7 +136,7 @@
             }
             checkCollision(enemyMesh);
         });
-        Textures.ROAD.offset.y += speed / 4000;
+        Textures.ROAD.offset.y -= speed / 4000;
         Textures.ROAD.needsUpdate = true;
 
         if (!!BARRELLING) {
