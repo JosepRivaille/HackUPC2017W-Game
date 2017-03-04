@@ -128,13 +128,13 @@
             shootBlaster();
         }
 
-        enemies.forEach(function (enemyMesh, index) {
+        enemiesMesh.forEach(function (enemyMesh, index) {
             enemyMesh.position.z += speed;
             if (enemyMesh.position.z > 1000) {
                 ++speed;
                 updateScore();
                 scene.remove(enemyMesh);
-                delete enemies[index];
+                enemiesMesh.splice(index, 1);
                 generateEnemy();
             }
             checkCollision(enemyMesh);
@@ -211,7 +211,7 @@
         enemyMesh.position.y = Math.floor(((Math.random() - 0.5) * window.innerHeight)) + window.innerHeight / 2;
         enemyMesh.position.z = -10000;
         scene.add(enemyMesh);
-        enemies.push(enemyMesh);
+        enemiesMesh.push(enemyMesh);
     }
 
     function getCookie(cookieName) {
