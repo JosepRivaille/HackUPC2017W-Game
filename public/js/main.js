@@ -12,11 +12,13 @@
     var PLAY = true;
     var BARRELLING = undefined;
 
+    // Basic ThreeJS elements
     var scene, camera, renderer;
-    var playerMesh, enemyMesh;
-    var enemies = [];
 
-    var speed = 30;
+    var playerMesh, enemyMesh;
+    var enemiesMesh = [];
+
+    var speed = 50;
     var score = 0;
 
     var handModel = {};
@@ -64,7 +66,7 @@
             meteorObj.traverse(function (child) {
                 if (child instanceof THREE.Mesh) {
                     loader.load('models/meteor.png', function (texture) {
-                        child.material = new THREE.MeshLambertMaterial({map: texture, side: THREE.DoubleSide});
+                        child.material = new THREE.MeshLambertMaterial({map: texture});
                     });
                 }
             });
@@ -89,19 +91,30 @@
         scene.add(light);
 
         // Plane
-        var geometry = new THREE.CubeGeometry( window.innerWidth*3, window.innerHeight*2, 10000 );
-        var material = new THREE.MeshPhongMaterial( { map: Textures.ROAD, side: THREE.BackSide } )
-        var cube = new THREE.Mesh( geometry, material );
-        cube.position.y = window.innerHeight/2;
+        var geometry = new THREE.CubeGeometry(window.innerWidth * 3, window.innerHeight * 2, 10000);
+        var material = new THREE.MeshPhongMaterial({map: Textures.ROAD, side: THREE.BackSide})
+        var cube = new THREE.Mesh(geometry, material);
+        cube.position.y = window.innerHeight / 2;
 
-        scene.add( cube );
+        scene.add(cube);
 
 
         // Player
         scene.add(playerMesh);
 
         updateScore();
-        generateEnemy();
+
+        function createHorde() {
+            var enemies = Math.floor(Math.random() * 6 + 1);
+            for (var i = 0; i < enemies && enemiesMesh.length < 15; ++i) {
+                generateEnemy();
+            }
+            setTimeout(function () {
+                createHorde();
+            }, Math.floor((Math.random() * 3) + 1) * 1000);
+        }
+
+        createHorde();
 
         // Render
         renderer = new THREE.WebGLRenderer({alpha: true});
@@ -125,14 +138,13 @@
             shootBlaster();
         }
 
-        enemies.forEach(function (enemyMesh, index) {
+        enemiesMesh.forEach(function (enemyMesh, index) {
             enemyMesh.position.z += speed;
             if (enemyMesh.position.z > 1000) {
                 ++speed;
                 updateScore();
                 scene.remove(enemyMesh);
-                delete enemies[index];
-                generateEnemy();
+                enemiesMesh.splice(index, 1);
             }
             checkCollision(enemyMesh);
         });
@@ -198,17 +210,18 @@
     // Enemy
     function generateEnemy() {
         var randSize = (Math.random() * 3 + 1) * (!!Math.floor(Math.random()) ? -1 : 1);
-        enemyMesh.scale.x = randSize;
-        enemyMesh.scale.y = randSize;
-        enemyMesh.scale.z = randSize;
-        enemyMesh.rotation.x += randSize * randSize;
-        enemyMesh.rotation.y -= randSize + randSize;
-        enemyMesh.rotation.z += randSize;
-        enemyMesh.position.x = Math.floor(((Math.random() - 0.5) * window.innerWidth * 2));
-        enemyMesh.position.y = Math.floor(((Math.random() - 0.5) * window.innerHeight)) + window.innerHeight / 2;
-        enemyMesh.position.z = -10000;
-        scene.add(enemyMesh);
-        enemies.push(enemyMesh);
+        var newEnemyMesh = enemyMesh.clone();
+        newEnemyMesh.scale.x = randSize;
+        newEnemyMesh.scale.y = randSize;
+        newEnemyMesh.scale.z = randSize;
+        newEnemyMesh.rotation.x += randSize * randSize;
+        newEnemyMesh.rotation.y -= randSize + randSize;
+        newEnemyMesh.rotation.z += randSize;
+        newEnemyMesh.position.x = Math.floor(((Math.random() - 0.5) * window.innerWidth * 2));
+        newEnemyMesh.position.y = Math.floor(((Math.random() - 0.5) * window.innerHeight)) + window.innerHeight / 2;
+        newEnemyMesh.position.z = -10000;
+        scene.add(newEnemyMesh);
+        enemiesMesh.push(newEnemyMesh);
     }
 
     function getCookie(cookieName) {
