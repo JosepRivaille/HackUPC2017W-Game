@@ -7,13 +7,20 @@
         JUMP_HEIGHT: 600
     };
 
+    const Sounds = {
+        MAIN_THEME: document.getElementById('main-sound'),
+        COLLISION: document.getElementById('collision-sound'),
+        BARREL_ROLL: document.getElementById('barrel-roll'),
+        BLASTER: document.getElementById('blaster-sound')
+    };
+
     var Textures = {};
 
     var PLAY = true;
 
     var scene, camera, renderer;
     var planeGeometry, planeMaterial, planeMesh;
-    var playerGeometry, playerMaterial, playerMesh;
+    var playerMesh;
     var enemyGeometry, enemyMaterial, enemyMesh;
 
     var speed = 50;
@@ -21,7 +28,15 @@
 
     var handModel = {};
 
-    var loader = new THREE.TextureLoader();
+    var manager = new THREE.LoadingManager();
+    manager.onProgress = function ( item, loaded, total ) {
+
+        console.log( item, loaded, total );
+
+    };
+
+    var objectLoader = new THREE.OBJLoader(manager);
+    var loader = new THREE.TextureLoader(manager);
     loader.load('img/road.jpg', function (roadTexture) {
         roadTexture.wrapS = THREE.RepeatWrapping;
         roadTexture.wrapT = THREE.RepeatWrapping;
@@ -31,19 +46,38 @@
             Textures.BOX = boxTexture;
             loader.load('img/sky.jpg', function (skyTexture) {
                 Textures.SKY = skyTexture;
+                objectLoader.load('models/arwing.obj', function (arwing) {
+                    arwing.traverse(function (child) {
+                        if (child instanceof THREE.Mesh) {
+                            loader.load('models/arwing.png', function (texture) {
+                                child.material = new THREE.MeshBasicMaterial({map: texture});
+                            });
+                        }
+                    });
+                    arwing.scale.x = 150;
+                    arwing.scale.y = 150;
+                    arwing.scale.z = 150;
+                    arwing.rotation.y = Math.PI;
+                    playerMesh = arwing;
+
+                    init();
+                    animate();
+                });
             });
-            init();
-            animate();
         })
     });
 
     function init() {
+
+        Sounds.MAIN_THEME.volume = 0.7;
+        Sounds.MAIN_THEME.play();
+
         scene = new THREE.Scene();
 
         // Camera
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
         camera.position.z = 1000;
-        camera.position.y = 500;
+        camera.position.y = 700;
 
         // Plane
         planeGeometry = new THREE.PlaneBufferGeometry(4000, 10000);
@@ -52,11 +86,7 @@
         planeMesh.rotation.x = -Math.PI / 2;
         scene.add(planeMesh);
 
-        // Player (Currently a cube)
-        playerGeometry = new THREE.IcosahedronBufferGeometry(150);
-        playerMaterial = new THREE.MeshBasicMaterial({color: 0x910D1A});
-        playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
-        playerMesh.position.y = 100;
+        // Player
         scene.add(playerMesh);
 
         generateEnemy();
@@ -77,14 +107,14 @@
 
         camera.updateProjectionMatrix();
 
+        playerMesh.position.x = slideLateral();
+        playerMesh.position.y = jumpVertical();
         if (handModel.extended) {
-            playerMesh.position.x = slideLateral();
-            playerMesh.position.y = jumpVertical();
+            shootBullet();
         }
 
-        playerMesh.rotation.x += speed / 2;
-        enemyMesh.position.z += speed;
-        Textures.ROAD.offset.y += speed / 3000;
+        enemyMesh.position.z += speed * 2;
+        Textures.ROAD.offset.y += speed / 3500;
         Textures.ROAD.needsUpdate = true;
 
         if (enemyMesh.position.z > 1000) {
@@ -111,9 +141,13 @@
         var secondBB = new THREE.Box3().setFromObject(enemyMesh);
         if (firstBB.intersectsBox(secondBB)) {
             PLAY = false;
+            Sounds.MAIN_THEME.volume = 0.2;
+            Sounds.COLLISION.play();
             var menu = document.getElementById("menu");
             menu.style.display = 'block';
+            document.getElementById("menuHighScore").innerHTML = treatHighScore();
             document.getElementById("reset-button").addEventListener("click", function () {
+                Sounds.MAIN_THEME.pause();
                 menu.style.display = 'none';
                 window.location.reload();
             });
@@ -141,6 +175,10 @@
         }
     }
 
+    function shootBullet() {
+        Sounds.BLASTER.play();
+    }
+
     // Enemy
     function generateEnemy() {
         enemyGeometry = new THREE.BoxGeometry(400, 400, 400);
@@ -161,21 +199,44 @@
         }
     }
 
-    Leap.loop({
-        hand: function (hand) {
-            handModel = {
-                x: hand._translation[0],
-                y: hand._translation[1],
-                z: hand._translation[2],
-                extended: hand.fingers[1].extended
+    function getCookie(cookieName) {
+        var name = cookieName + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
             }
         }
-    });
+        return "";
+    }
+
+    function treatHighScore() {
+        var highScore = getCookie("highScore");
+        if (highScore === '' || eval(score > highScore)) {
+            document.cookie = 'highScore=' + score;
+        }
+        return highScore;
+    }
 
     window.onresize = function () {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     };
+
+    Leap.loop({
+        hand: function (hand) {
+            handModel = {
+                x: hand._translation[0],
+                y: hand._translation[1],
+                z: hand._translation[2],
+                extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.7
+            };
+        }
+    });
 
 })();

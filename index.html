@@ -12,10 +12,26 @@
     </div>
     <div id="menu">
         <h1>Game Over</h1>
+        <h2>HighScore: <span id="menuHighScore">0</span></h2>
         <button id="reset-button">reset</button>
     </div>
 </div>
+
+<audio id="main-sound">
+    <source src="music/main-theme.mp3" type="audio/mp3">
+</audio>
+<audio id="collision-sound">
+    <source src="music/collision.mp3" type="audio/mp3">
+</audio>
+<audio id="barrel-roll">
+    <source src="music/barrel-roll.mp3" type="audio/mp3">
+</audio>
+<audio id="blaster-sound">
+    <source src="music/blaster.mp3" type="audio/mp3">
+</audio>
+
 <script src="js/three.min.js"></script>
+<script src="js/obj-loader.js"></script>
 <script src="js/leap.min.js"></script>
 <script src="js/main.js"></script>
 </body>
