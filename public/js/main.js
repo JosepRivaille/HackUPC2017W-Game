@@ -3,13 +3,11 @@
     const Const = {
         MAX_ZOOM: 150,
         MIN_ZOOM: 50,
-        DETECTION: 50
+        DETECTION: 50,
+        JUMP_HEIGHT: 600
     };
 
-    var Textures = {
-        ROAD: undefined,
-        BOX: undefined
-    };
+    var Textures = {};
 
     var PLAY = true;
 
@@ -31,6 +29,9 @@
         Textures.ROAD = roadTexture;
         loader.load('img/box.png', function (boxTexture) {
             Textures.BOX = boxTexture;
+            loader.load('img/sky.jpg', function (skyTexture) {
+                Textures.SKY = skyTexture;
+            });
             init();
             animate();
         })
@@ -61,9 +62,9 @@
         generateEnemy();
 
         // Render
-        renderer = new THREE.WebGLRenderer();
+        renderer = new THREE.WebGLRenderer({alpha: true});
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x99CCFF, 1);
+        renderer.setClearColor(0x000000, 0);
 
         document.body.appendChild(renderer.domElement);
     }
@@ -78,6 +79,7 @@
 
         if (handModel.extended) {
             playerMesh.position.x = slideLateral();
+            playerMesh.position.y = jumpVertical();
         }
 
         playerMesh.rotation.x += speed / 2;
@@ -86,7 +88,7 @@
         Textures.ROAD.needsUpdate = true;
 
         if (enemyMesh.position.z > 1000) {
-            ++speed;
+            speed += 2;
             updateScore();
             scene.remove(enemyMesh);
             generateEnemy();
@@ -109,10 +111,10 @@
         var secondBB = new THREE.Box3().setFromObject(enemyMesh);
         if (firstBB.intersectsBox(secondBB)) {
             PLAY = false;
-            var resetButton = document.getElementById("resetbutton");
-            resetButton.style.display = 'block';
-            resetButton.addEventListener("click", function () {
-                resetButton.style.display = 'none';
+            var menu = document.getElementById("menu");
+            menu.style.display = 'block';
+            document.getElementById("reset-button").addEventListener("click", function () {
+                menu.style.display = 'none';
                 window.location.reload();
             });
         }
@@ -126,6 +128,17 @@
         else if (handModel.x < -Const.DETECTION)
             return -width;
         return 0;
+    }
+
+    // Y-axis movement (Positive -> Up, Negative -> Down)
+    function jumpVertical() {
+        if (handModel.y > Const.DETECTION && playerMesh.position.y === 100) {
+            return Const.JUMP_HEIGHT;
+        } else if (handModel.y < Const.DETECTION) {
+            return 100;
+        } else {
+            return playerMesh.position.y;
+        }
     }
 
     // Enemy

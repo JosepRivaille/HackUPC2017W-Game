@@ -6,6 +6,11 @@
 body{
     font-family: "custom-font", serif;
 }
+
+canvas {
+    background-image: url('../img/sky.jpg') !important;
+    background-size: cover;
+}
 #hud{
     position: absolute;
     width: 100vw;
@@ -21,6 +26,7 @@ body{
 }
 #menu{
     width: 40%;
+    display: none;
     border-radius: 10px;
     background-color: rgba(255, 240,119, 0.85);
     border: 5px solid black;
