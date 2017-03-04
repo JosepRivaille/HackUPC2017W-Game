@@ -34,6 +34,7 @@ canvas {
     perspective: 500px;
 
 }
+
 #hud .hud-part {
     height: 10vh;
     background-color: rgba(167, 216, 222, 0.8);
