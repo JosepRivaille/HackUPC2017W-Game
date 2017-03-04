@@ -15,12 +15,14 @@
     // Basic ThreeJS elements
     var scene, camera, renderer;
 
+    // Plane
+    var planeGeometry, planeMaterial, planeMesh;
+
     var playerMesh, enemyMesh;
     var enemiesMesh = [];
 
     var speed = 50;
     var score = 0;
-    var materials;
 
     var handModel = {};
 
@@ -38,27 +40,13 @@
         var objectLoader = new THREE.OBJLoader(manager);
         var loader = new THREE.TextureLoader(manager);
 
-        loader.load('img/road.png', function (roadTexture) {
+        loader.load('img/road.jpg', function (roadTexture) {
             roadTexture.wrapS = THREE.RepeatWrapping;
             roadTexture.wrapT = THREE.RepeatWrapping;
             roadTexture.repeat.set(1, 1);
-            Textures.ROAD = {
-                bottom: roadTexture.clone(),
-                right: roadTexture.clone(),
-                top: roadTexture.clone(),
-                left: roadTexture.clone()
-            };
-            materials = [
-                new THREE.MeshPhongMaterial({map: Textures.ROAD.right, side: THREE.BackSide}),
-                new THREE.MeshPhongMaterial({map: Textures.ROAD.left, side: THREE.BackSide}),
-                new THREE.MeshPhongMaterial({map: Textures.ROAD.top, side: THREE.BackSide}),
-                new THREE.MeshPhongMaterial({map: Textures.ROAD.bottom, side: THREE.BackSide}),
-                new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide}), // Back
-                new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide}) // Front
-            ];
+            Textures.ROAD = roadTexture;
 
         });
-
         loader.load('img/sky.jpg', function (skyTexture) {
             Textures.SKY = skyTexture;
         });
@@ -70,9 +58,9 @@
                     });
                 }
             });
-            arwingObj.scale.x = 100;
-            arwingObj.scale.y = 100;
-            arwingObj.scale.z = 100;
+            arwingObj.scale.x = 75;
+            arwingObj.scale.y = 75;
+            arwingObj.scale.z = 75;
             arwingObj.rotation.y = Math.PI;
             arwingObj.position.y = 50;
             playerMesh = arwingObj;
@@ -90,14 +78,13 @@
     }
 
     function init() {
-
         Sounds.MAIN_THEME.volume = 0.7;
         Sounds.MAIN_THEME.play();
 
         scene = new THREE.Scene();
 
         // Camera
-        camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.01, 10000);
+        camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 10000);
         camera.position.z = 1000;
         camera.position.y = 300;
 
@@ -106,19 +93,27 @@
         scene.add(light);
 
         // Plane
-        var geometry = new THREE.CubeGeometry(window.innerWidth * 3, window.innerHeight * 2, 10000);
-        var material = new THREE.MultiMaterial(materials);
-        var cube = new THREE.Mesh(geometry, material);
-        cube.position.y = window.innerHeight / 2;
-
-        scene.add(cube);
-
+        planeGeometry = new THREE.PlaneBufferGeometry(10000, 10000);
+        planeMaterial = new THREE.MeshLambertMaterial({map: Textures.ROAD});
+        planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+        planeMesh.rotation.x = -Math.PI / 2;
+        scene.add(planeMesh);
 
         // Player
         scene.add(playerMesh);
 
         updateScore();
-        generateEnemy();
+        function createHorde() {
+            var enemies = Math.floor(Math.random() * 6 + 1);
+            for (var i = 0; i < enemies && enemiesMesh.length < 15; ++i) {
+                generateEnemy();
+            }
+            setTimeout(function () {
+                createHorde();
+            }, Math.floor((Math.random() * 3) + 1) * 1000);
+        }
+
+        createHorde();
 
         // Render
         renderer = new THREE.WebGLRenderer({alpha: true});
@@ -149,18 +144,9 @@
                 updateScore();
                 scene.remove(enemyMesh);
                 enemiesMesh.splice(index, 1);
-                generateEnemy();
             }
             checkCollision(enemyMesh);
         });
-        Textures.ROAD.left.offset.x -= speed / 4000;
-        Textures.ROAD.left.needsUpdate = true;
-        Textures.ROAD.right.offset.x += speed / 4000;
-        Textures.ROAD.right.needsUpdate = true;
-        Textures.ROAD.bottom.offset.y -= speed / 4000;
-        Textures.ROAD.bottom.needsUpdate = true;
-        Textures.ROAD.top.offset.y += speed / 4000;
-        Textures.ROAD.top.needsUpdate = true;
 
 
         if (!!BARRELLING) {
@@ -210,8 +196,8 @@
                 playerMesh.rotation.z = -handModel.x * 0.0025;
             }
         }
-        if (handModel.y > 0 && handModel.y < 250) {
-            playerMesh.position.y = handModel.y * 5 - 400;
+        if (handModel.y > 50 && handModel.y < 200) {
+            playerMesh.position.y = handModel.y * 5 - 250;
         }
     }
 
@@ -222,17 +208,19 @@
     // Enemy
     function generateEnemy() {
         var randSize = (Math.random() * 3 + 1) * (!!Math.floor(Math.random()) ? -1 : 1);
-        enemyMesh.scale.x = randSize;
-        enemyMesh.scale.y = randSize;
-        enemyMesh.scale.z = randSize;
-        enemyMesh.rotation.x += randSize * randSize;
-        enemyMesh.rotation.y -= randSize + randSize;
-        enemyMesh.rotation.z += randSize;
-        enemyMesh.position.x = Math.floor(((Math.random() - 0.5) * window.innerWidth * 2));
-        enemyMesh.position.y = Math.floor(((Math.random() - 0.5) * window.innerHeight)) + window.innerHeight / 2;
-        enemyMesh.position.z = -10000;
-        scene.add(enemyMesh);
-        enemiesMesh.push(enemyMesh);
+        var newEnemyMesh = enemyMesh.clone();
+        newEnemyMesh.scale.x = randSize;
+        newEnemyMesh.scale.y = randSize;
+        newEnemyMesh.scale.z = randSize;
+        newEnemyMesh.rotation.x += randSize * randSize;
+        newEnemyMesh.rotation.y -= randSize + randSize;
+        newEnemyMesh.rotation.z += randSize;
+        newEnemyMesh.position.x = Math.floor(((Math.random() - 0.5) * window.innerWidth * 2));
+        newEnemyMesh.position.y = Math.floor(((Math.random() - 0.5) * window.innerHeight)) + window.innerHeight / 2;
+        newEnemyMesh.position.z = -10000;
+        scene.add(newEnemyMesh);
+        enemiesMesh.push(newEnemyMesh);
+
     }
 
     function getCookie(cookieName) {

@@ -12,18 +12,6 @@ canvas {
     background-size: cover;
 }
 
-#layer {
-    position: absolute;
-    width: 100vw;
-    height: 100vh;
-    background-size: 20%;
-    background-attachment: fixed;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-image: url("../img/hud_bg.png");
-    opacity: 0.2;
-}
-
 #hud {
     position: absolute;
     bottom: -25px;
