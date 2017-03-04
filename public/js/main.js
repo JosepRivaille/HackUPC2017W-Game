@@ -11,6 +11,8 @@
         BOX: undefined
     };
 
+    var PLAY = true;
+
     var scene, camera, renderer;
     var planeGeometry, planeMaterial, planeMesh;
     var playerGeometry, playerMaterial, playerMesh;
@@ -50,7 +52,7 @@
         scene.add(planeMesh);
 
         // Player (Currently a cube)
-        playerGeometry = new THREE.BoxGeometry(200, 200, 200);
+        playerGeometry = new THREE.IcosahedronBufferGeometry(150);
         playerMaterial = new THREE.MeshBasicMaterial({color: 0x910D1A});
         playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
         playerMesh.position.y = 100;
@@ -68,7 +70,9 @@
 
     function animate() {
 
-        requestAnimationFrame(animate);
+        if (PLAY) {
+            requestAnimationFrame(animate);
+        }
 
         camera.updateProjectionMatrix();
 
@@ -76,31 +80,42 @@
             playerMesh.position.x = slideLateral();
         }
 
-        if (enemyMesh !== undefined) {
-            enemyMesh.position.z += speed;
-            Textures.ROAD.offset.y += speed / 3000;
-            Textures.ROAD.needsUpdate = true;
-            if (enemyMesh.position.z > 1000) {
-                ++speed;
-                ++score;
-                scene.remove(enemyMesh);
-                generateEnemy();
-            }
+        playerMesh.rotation.x += speed / 2;
+        enemyMesh.position.z += speed;
+        Textures.ROAD.offset.y += speed / 3000;
+        Textures.ROAD.needsUpdate = true;
 
-            if (checkCollision()) {
-                //alert(score);
-            }
+        if (enemyMesh.position.z > 1000) {
+            ++speed;
+            updateScore();
+            scene.remove(enemyMesh);
+            generateEnemy();
         }
+
+        checkCollision();
 
         renderer.render(scene, camera);
 
         resetHandModel();
     }
 
+    function updateScore() {
+        ++score;
+        document.getElementById("score").innerHTML = String(score);
+    }
+
     function checkCollision() {
         var firstBB = new THREE.Box3().setFromObject(playerMesh);
         var secondBB = new THREE.Box3().setFromObject(enemyMesh);
-        return firstBB.intersectsBox(secondBB);
+        if (firstBB.intersectsBox(secondBB)) {
+            PLAY = false;
+            var resetButton = document.getElementById("resetbutton");
+            resetButton.style.display = 'block';
+            resetButton.addEventListener("click", function () {
+                resetButton.style.display = 'none';
+                window.location.reload();
+            });
+        }
     }
 
     // X-axis movement (Positive -> Right, Negative -> Left)
