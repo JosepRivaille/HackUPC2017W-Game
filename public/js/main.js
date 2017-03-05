@@ -187,8 +187,8 @@ function game() {
 
     function updateScore() {
         ++score;
-        document.getElementById("score").innerHTML = String(score);
-        document.getElementById("speed").innerHTML = String(speed);
+        document.getElementById('score').innerHTML = String(score);
+        document.getElementById('speed').innerHTML = String(speed);
         if (score % 100 === 0) {
             var currentBombs = document.getElementById('bombs').textContent;
             document.getElementById('bombs').innerHTML = String(parseInt(currentBombs) + 1);
@@ -203,10 +203,10 @@ function game() {
             PLAY = false;
             Sounds.MAIN_THEME.volume = 0.2;
             Sounds.COLLISION.play();
-            var menu = document.getElementById("hud-menu");
+            var menu = document.getElementById('hud-menu');
             menu.style.display = 'block';
-            document.getElementById("high-score").innerHTML = treatHighScore();
-            document.getElementById("reset-button").addEventListener("click", function () {
+            document.getElementById('high-score').innerHTML = treatHighScore();
+            document.getElementById('reset-button').addEventListener('click', function () {
                 Sounds.MAIN_THEME.pause();
                 menu.style.display = 'none';
                 window.location.reload();
@@ -274,7 +274,7 @@ function game() {
     }
 
     function getCookie(cookieName) {
-        var name = cookieName + "=";
+        var name = cookieName + '=';
         var ca = document.cookie.split(';');
         for (var i = 0; i < ca.length; i++) {
             var c = ca[i];
@@ -289,7 +289,7 @@ function game() {
     }
 
     function treatHighScore() {
-        var highScore = getCookie("highScore");
+        var highScore = getCookie('highScore');
         if (highScore === '' || eval(score > highScore)) {
             document.cookie = 'highScore=' + score;
         }
@@ -347,7 +347,7 @@ function game() {
             handModel = {
                 x: hand.palmPosition[0],
                 y: hand.palmPosition[1],
-                extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.7
+                extended: hand.fingers[1].extended && hand.fingers[2].extended && !hand.fingers[3].extended && !hand.fingers[3].extended && hand.confidence > 0.6
             };
         },
         enableGestures: true
@@ -357,8 +357,10 @@ function game() {
                 switch (gesture.type) {
                     case "circle":
                         if (BARRELLING === undefined) {
-                            Sounds.BARREL_ROLL.volume = 0.5;
-                            Sounds.BARREL_ROLL.play();
+                            if (Math.floor(Math.random() * 4) + 1 === 4) {
+                                Sounds.BARREL_ROLL.volume = 0.5;
+                                Sounds.BARREL_ROLL.play();
+                            }
                             setTimeout(function () {
                                 BARRELLING = Leap.vec3.dot(frame.pointable(gesture.pointableIds[0]).direction, gesture.normal) > 0 ? 1 : -1;
                             }, 250);
