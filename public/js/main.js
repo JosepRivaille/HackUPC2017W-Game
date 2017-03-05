@@ -117,7 +117,7 @@ function game() {
             }
             setTimeout(function () {
                 createHorde();
-            }, Math.floor((Math.random() * 4) + 1) * 1000);
+            }, Math.floor((Math.random() * 2.5) + 1) * 1000);
         }
 
         createHorde();
