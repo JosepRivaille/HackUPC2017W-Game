@@ -1,19 +1,29 @@
-(function () {
+function game() {
 
     const Sounds = {
         MAIN_THEME: document.getElementById('main-sound'),
         COLLISION: document.getElementById('collision-sound'),
         BARREL_ROLL: document.getElementById('barrel-roll'),
-        BLASTER: document.getElementById('blaster-sound')
+        BOMB_PICKUP: document.getElementById('bomb-pickup'),
+        BOMB_EXPLOSION: document.getElementById('bomb-explosion')
     };
 
     var Textures = {};
 
     var PLAY = true;
     var BARRELLING = undefined;
+    var SHOOTING = false;
 
     // Basic ThreeJS elements
     var scene, camera, renderer;
+
+    // Explosion
+    var movementSpeed = 100;
+    var totalObjects = 1000;
+    var objectSize = 50;
+    var colors = [0xD4F4EB, 0x65C4E1];
+    var dirs = [];
+    var parts = [];
 
     // Plane
     var planeGeometry, planeMaterial, planeMesh;
@@ -40,15 +50,11 @@
         var objectLoader = new THREE.OBJLoader(manager);
         var loader = new THREE.TextureLoader(manager);
 
-        loader.load('img/road.jpg', function (roadTexture) {
-            roadTexture.wrapS = THREE.RepeatWrapping;
-            roadTexture.wrapT = THREE.RepeatWrapping;
-            roadTexture.repeat.set(1, 1);
-            Textures.ROAD = roadTexture;
-
-        });
-        loader.load('img/sky.jpg', function (skyTexture) {
-            Textures.SKY = skyTexture;
+        loader.load('img/planet.jpg', function (planetTexture) {
+            planetTexture.wrapS = THREE.RepeatWrapping;
+            planetTexture.wrapT = THREE.RepeatWrapping;
+            planetTexture.repeat.set(1, 1);
+            Textures.PLANET = planetTexture;
         });
         objectLoader.load('models/arwing.obj', function (arwingObj) {
             arwingObj.traverse(function (child) {
@@ -94,7 +100,7 @@
 
         // Plane
         planeGeometry = new THREE.PlaneBufferGeometry(10000, 10000);
-        planeMaterial = new THREE.MeshLambertMaterial({map: Textures.ROAD});
+        planeMaterial = new THREE.MeshLambertMaterial({map: Textures.PLANET});
         planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
         planeMesh.rotation.x = -Math.PI / 2;
         scene.add(planeMesh);
@@ -103,14 +109,15 @@
         scene.add(playerMesh);
 
         updateScore();
+
         function createHorde() {
-            var enemies = Math.floor(Math.random() * 6 + 1);
-            for (var i = 0; i < enemies && enemiesMesh.length < 15; ++i) {
+            var enemies = Math.floor(Math.random() * 8 + 1);
+            for (var i = 0; i < enemies && enemiesMesh.length < 20; ++i) {
                 generateEnemy();
             }
             setTimeout(function () {
                 createHorde();
-            }, Math.floor((Math.random() * 3) + 1) * 1000);
+            }, Math.floor((Math.random() * 4) + 1) * 1000);
         }
 
         createHorde();
@@ -129,13 +136,13 @@
             requestAnimationFrame(animate);
         }
 
+        if (handModel.extended && !SHOOTING) {
+            shootBomb();
+        }
+
         camera.updateProjectionMatrix();
 
         controlMovement();
-
-        if (handModel.extended) {
-            shootBlaster();
-        }
 
         enemiesMesh.forEach(function (enemyMesh, index) {
             enemyMesh.position.z += speed;
@@ -148,6 +155,8 @@
             checkCollision(enemyMesh);
         });
 
+        Textures.PLANET.offset.y += speed / 8000;
+        Textures.PLANET.needsUpdate = true;
 
         if (!!BARRELLING) {
             playerMesh.rotation.z += (0.15 * BARRELLING);
@@ -164,10 +173,27 @@
         renderer.render(scene, camera);
     }
 
+    function render() {
+        requestAnimationFrame(render);
+
+        var pCount = parts.length;
+        while (pCount--) {
+            parts[pCount].update();
+        }
+
+        renderer.render(scene, camera);
+
+    }
+
     function updateScore() {
         ++score;
         document.getElementById("score").innerHTML = String(score);
         document.getElementById("speed").innerHTML = String(speed);
+        if (score%100 === 0) {
+            var currentBombs = document.getElementById('bombs').textContent;
+            document.getElementById('bombs').innerHTML = String(currentBombs + 1);
+            Sounds.BOMB_PICKUP.play();
+        }
     }
 
     function checkCollision(enemyMesh) {
@@ -201,11 +227,29 @@
         }
     }
 
-    function shootBlaster() {
-        Sounds.BLASTER.play();
+    function shootBomb() {
+        var currentBombs = document.getElementById('bombs').textContent;
+        if (currentBombs > 0) {
+            Sounds.BOMB_EXPLOSION.play();
+            SHOOTING = true;
+            setTimeout(function () {
+                SHOOTING = false;
+            }, 5000);
+            setTimeout(function () {
+                parts.push(new ExplodeAnimation(playerMesh.position.x, playerMesh.position.y, -5000));
+            }, 1500);
+            render();
+            document.getElementById('bombs').innerHTML = String(currentBombs - 1);
+            enemiesMesh.forEach(function (enemy, index) {
+                if (enemy.position.x > playerMesh.position.x - 200 && enemy.position.x < playerMesh.position.x + 200 &&
+                    enemy.position.y > playerMesh.position.y - 200 && enemy.position.y < playerMesh.position.y + 200) {
+                    scene.remove(enemy);
+                    enemiesMesh.splice(index, 1);
+                }
+            });
+        }
     }
 
-    // Enemy
     function generateEnemy() {
         var randSize = (Math.random() * 3 + 1) * (!!Math.floor(Math.random()) ? -1 : 1);
         var newEnemyMesh = enemyMesh.clone();
@@ -216,11 +260,10 @@
         newEnemyMesh.rotation.y -= randSize + randSize;
         newEnemyMesh.rotation.z += randSize;
         newEnemyMesh.position.x = Math.floor(((Math.random() - 0.5) * window.innerWidth * 2));
-        newEnemyMesh.position.y = Math.floor(((Math.random() - 0.5) * window.innerHeight)) + window.innerHeight / 2;
+        newEnemyMesh.position.y = Math.floor(((Math.random() - 0.5) * window.innerHeight)) + window.innerHeight;
         newEnemyMesh.position.z = -10000;
         scene.add(newEnemyMesh);
         enemiesMesh.push(newEnemyMesh);
-
     }
 
     function getCookie(cookieName) {
@@ -244,6 +287,46 @@
             document.cookie = 'highScore=' + score;
         }
         return highScore;
+    }
+
+    function ExplodeAnimation(x, y, z) {
+        var geometry = new THREE.Geometry();
+
+        for (var i = 0; i < totalObjects; i++) {
+            var vertex = new THREE.Vector3();
+            vertex.x = x;
+            vertex.y = y;
+            vertex.z = z;
+
+            geometry.vertices.push(vertex);
+            dirs.push({
+                x: (Math.random() * movementSpeed) - (movementSpeed / 2),
+                y: (Math.random() * movementSpeed) - (movementSpeed / 2),
+                z: (Math.random() * movementSpeed) - (movementSpeed / 2)
+            });
+        }
+        var material = new THREE.ParticleBasicMaterial({
+            size: objectSize,
+            color: colors[Math.round(Math.random() * colors.length)]
+        });
+        this.object = new THREE.ParticleSystem(geometry, material);
+        this.status = true;
+
+        scene.add(this.object);
+
+        this.update = function () {
+            if (this.status == true) {
+                var pCount = totalObjects;
+                while (pCount--) {
+                    var particle = this.object.geometry.vertices[pCount];
+                    particle.y += dirs[pCount].y;
+                    particle.x += dirs[pCount].x;
+                    particle.z += dirs[pCount].z;
+                }
+                this.object.geometry.verticesNeedUpdate = true;
+            }
+        }
+
     }
 
     window.onresize = function () {
@@ -277,5 +360,12 @@
             });
         }
     });
+}
 
+(function () {
+    function play() {
+        game();
+    }
+
+    play();
 })();
