@@ -363,6 +363,12 @@ function game() {
                                 BARRELLING = Leap.vec3.dot(frame.pointable(gesture.pointableIds[0]).direction, gesture.normal) > 0 ? 1 : -1;
                             }, 250);
                         }
+                        break;
+                    case "keyTap":
+                        if (!PLAY) {
+                            Sounds.MAIN_THEME.pause();
+                            window.location.reload();
+                        }
                 }
             });
         }
