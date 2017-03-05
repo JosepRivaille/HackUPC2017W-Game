@@ -18,9 +18,9 @@ function game() {
     var scene, camera, renderer;
 
     // Explosion
-    var movementSpeed = 100;
-    var totalObjects = 1000;
-    var objectSize = 50;
+    var movementSpeed = 300;
+    var totalObjects = 2000;
+    var objectSize = 80;
     var colors = [0xD4F4EB, 0x65C4E1];
     var dirs = [];
     var parts = [];
@@ -189,7 +189,7 @@ function game() {
         ++score;
         document.getElementById("score").innerHTML = String(score);
         document.getElementById("speed").innerHTML = String(speed);
-        if (score%100 === 0) {
+        if (score % 100 === 0) {
             var currentBombs = document.getElementById('bombs').textContent;
             document.getElementById('bombs').innerHTML = String(currentBombs + 1);
             Sounds.BOMB_PICKUP.play();
@@ -235,18 +235,25 @@ function game() {
             setTimeout(function () {
                 SHOOTING = false;
             }, 5000);
-            setTimeout(function () {
-                parts.push(new ExplodeAnimation(playerMesh.position.x, playerMesh.position.y, -5000));
-            }, 1500);
             render();
+            var explosionDepth = -5000;
             document.getElementById('bombs').innerHTML = String(currentBombs - 1);
-            enemiesMesh.forEach(function (enemy, index) {
+            enemiesMesh.forEach(function (enemy) {
                 if (enemy.position.x > playerMesh.position.x - 200 && enemy.position.x < playerMesh.position.x + 200 &&
                     enemy.position.y > playerMesh.position.y - 200 && enemy.position.y < playerMesh.position.y + 200) {
-                    scene.remove(enemy);
-                    enemiesMesh.splice(index, 1);
+                    explosionDepth = enemy.position.z;
                 }
             });
+            setTimeout(function () {
+                parts.push(new ExplodeAnimation(playerMesh.position.x, playerMesh.position.y, explosionDepth));
+                enemiesMesh.forEach(function (enemy, index) {
+                    var distance = Math.pow(enemy.position.x - playerMesh.position.x, 2) + Math.pow(enemy.position.y - playerMesh.position.y, 2) + Math.pow((enemy.position.z - explosionDepth) / speed * 2, 2);
+                    if (distance < 200000000000000) {
+                        scene.remove(enemy);
+                        enemiesMesh.splice(index, 1);
+                    }
+                });
+            }, 1500);
         }
     }
 
