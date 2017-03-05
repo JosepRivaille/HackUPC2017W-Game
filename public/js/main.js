@@ -251,6 +251,7 @@ function game() {
                     if (distance < 200000000000000) {
                         scene.remove(enemy);
                         enemiesMesh.splice(index, 1);
+                        updateScore();
                     }
                 });
             }, 1500);
