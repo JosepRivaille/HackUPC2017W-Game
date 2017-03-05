@@ -191,7 +191,7 @@ function game() {
         document.getElementById("speed").innerHTML = String(speed);
         if (score % 100 === 0) {
             var currentBombs = document.getElementById('bombs').textContent;
-            document.getElementById('bombs').innerHTML = String(currentBombs + 1);
+            document.getElementById('bombs').innerHTML = String(parseInt(currentBombs) + 1);
             Sounds.BOMB_PICKUP.play();
         }
     }
@@ -237,7 +237,7 @@ function game() {
             }, 5000);
             render();
             var explosionDepth = -5000;
-            document.getElementById('bombs').innerHTML = String(currentBombs - 1);
+            document.getElementById('bombs').innerHTML = String(parseInt(currentBombs) - 1);
             enemiesMesh.forEach(function (enemy) {
                 if (enemy.position.x > playerMesh.position.x - 200 && enemy.position.x < playerMesh.position.x + 200 &&
                     enemy.position.y > playerMesh.position.y - 200 && enemy.position.y < playerMesh.position.y + 200) {
